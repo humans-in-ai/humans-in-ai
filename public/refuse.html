@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>What Should AI Refuse? · Humans in AI Week</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="visitor refuse">
+    <main id="root">
+      <!-- ==================== START ==================== -->
+      <section id="start" class="screen active">
+        <div class="card">
+          <div class="kicker">HUMANS IN AI WEEK · BOOTH</div>
+          <h1>What should AI refuse?</h1>
+          <p class="lede">
+            Five real-world calls AI companies are making this week.
+            <br />
+            None of them have a clean answer. All of them shape the world.
+          </p>
+          <p class="lede">
+            <b>You vote on each one.</b> Then we show you where the rest of
+            the booth landed.
+          </p>
+          <button id="startBtn" class="primary">Start voting →</button>
+          <p class="fine">~2 minutes · anonymous · no login</p>
+        </div>
+      </section>
+
+      <!-- ==================== QUESTION ==================== -->
+      <section id="question" class="screen">
+        <div class="q-inner">
+          <div class="q-head">
+            <span class="kicker" id="qProgress">QUESTION 1 OF 5</span>
+            <h2 class="q-title" id="qTitle">—</h2>
+            <p class="q-prompt" id="qPrompt">—</p>
+          </div>
+          <div id="qOptions" class="q-options"></div>
+          <div id="qTally" class="q-tally hidden">
+            <div class="q-tally-label">Where the booth landed</div>
+            <div id="qBars" class="q-bars"></div>
+            <button id="qNext" class="primary">Next question →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== DEMOGRAPHIC ==================== -->
+      <section id="demographic" class="screen">
+        <div class="card">
+          <div class="kicker">ONE LAST THING</div>
+          <h2 class="demo-h">Which sounds most like you?</h2>
+          <p class="lede">
+            This helps us show how AI builders, daily users, and folks
+            outside the bubble see these calls differently. Your answer is
+            anonymous and only ever shown as part of the aggregate.
+          </p>
+          <div id="demoOptions" class="q-options"></div>
+          <button id="demoSkip" class="ghost">skip</button>
+        </div>
+      </section>
+
+      <!-- ==================== REVEAL ==================== -->
+      <section id="reveal" class="screen reveal">
+        <div class="reveal-inner">
+          <div class="kicker">YOU JUST DID THIS</div>
+          <h1>You made 5 calls<br />most people never get to.</h1>
+
+          <div id="revealList" class="reveal-list"></div>
+
+          <div class="kicker-block">
+            <p class="big">
+              These aren't hypothetical. <b>AI companies are making these
+              decisions this week</b> — for billions of people, in rooms most
+              of us will never sit in.
+            </p>
+            <p class="big">
+              Today you joined <b id="totalVoices">—</b> voices at this
+              booth. <b>The AI Collective</b> is how 250,000+ of us keep
+              showing up to that table.
+            </p>
+            <a class="cta" href="https://www.humansinaiweek.com" target="_blank">
+              Pledge your voice → humansinaiweek.com
+            </a>
+          </div>
+
+          <button id="restartBtn" class="ghost">cast another set of votes</button>
+        </div>
+      </section>
+    </main>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/refuse.js"></script>
+  </body>
+</html>

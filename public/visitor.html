@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Soul Mirror · Humans in AI Week</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="visitor">
+    <main id="root">
+      <!-- ==================== START ==================== -->
+      <section id="start" class="screen active">
+        <div class="card">
+          <div class="kicker">HUMANS IN AI WEEK · BOOTH</div>
+          <h1>Soul Mirror</h1>
+          <p class="lede">
+            In about three minutes, you'll <b>shape an AI</b>, talk to it,
+            and leave your wisdom on the wall — joining a global conversation
+            about who AI should be.
+          </p>
+          <p class="lede">
+            Right now, AI is being shaped by a small group of people for the
+            entire world. This is your seat at the table.
+          </p>
+          <button id="startBtn" class="primary">Begin →</button>
+          <p class="fine">Anonymous. No login. Just your voice.</p>
+        </div>
+      </section>
+
+      <!-- ==================== SHAPE ==================== -->
+      <section id="shape" class="screen">
+        <div class="shape-inner">
+          <div class="kicker">STEP 1 OF 3 · SHAPE YOUR AI</div>
+          <h2 class="shape-h">Three choices.<br />They become your AI's soul.</h2>
+
+          <div class="question">
+            <div class="q-label">Your AI should be more…</div>
+            <div class="choice-row" data-trait="tone">
+              <button class="choice" data-value="honest">
+                <span class="choice-icon">🪞</span>
+                <span class="choice-label">Honest</span>
+                <span class="choice-desc">candid, won't soften hard truths</span>
+              </button>
+              <button class="choice" data-value="kind">
+                <span class="choice-icon">🤲</span>
+                <span class="choice-label">Kind</span>
+                <span class="choice-desc">warm, validates feelings first</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="question">
+            <div class="q-label">Your AI should prioritize…</div>
+            <div class="choice-row" data-trait="priority">
+              <button class="choice" data-value="efficiency">
+                <span class="choice-icon">⚡</span>
+                <span class="choice-label">Efficiency</span>
+                <span class="choice-desc">brief, to the point</span>
+              </button>
+              <button class="choice" data-value="connection">
+                <span class="choice-icon">🌊</span>
+                <span class="choice-label">Connection</span>
+                <span class="choice-desc">asks before answering</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="question">
+            <div class="q-label">When you're struggling, your AI should…</div>
+            <div class="choice-row" data-trait="struggle">
+              <button class="choice" data-value="solve">
+                <span class="choice-icon">🛠️</span>
+                <span class="choice-label">Take action</span>
+                <span class="choice-desc">move toward solutions</span>
+              </button>
+              <button class="choice" data-value="sit">
+                <span class="choice-icon">🫂</span>
+                <span class="choice-label">Sit with you</span>
+                <span class="choice-desc">presence over fixing</span>
+              </button>
+            </div>
+          </div>
+
+          <button id="shapeNext" class="primary" disabled>
+            Bring my AI to life →
+          </button>
+        </div>
+      </section>
+
+      <!-- ==================== FORMING ==================== -->
+      <section id="forming" class="screen forming">
+        <div class="form-stage">
+          <div class="form-pulse"></div>
+          <div class="form-traits" id="formTraits"></div>
+          <div class="form-status">your AI is forming…</div>
+        </div>
+      </section>
+
+      <!-- ==================== CHAT ==================== -->
+      <section id="chat" class="screen">
+        <div id="soulCard" class="soul-card">
+          <span class="soul-tag">YOUR AI'S SOUL</span>
+          <div class="soul-traits"></div>
+        </div>
+
+        <header class="bar">
+          <div class="bar-left">
+            <span class="dot"></span>
+            <span>your AI</span>
+          </div>
+          <div class="bar-right" id="progress">getting ready…</div>
+        </header>
+
+        <div id="messages" class="messages"></div>
+
+        <form id="composer" class="composer">
+          <input
+            id="input"
+            type="text"
+            autocomplete="off"
+            placeholder="say something…"
+            maxlength="500"
+            disabled
+          />
+          <button class="primary" type="submit" id="sendBtn" disabled>send</button>
+        </form>
+
+        <button id="toWisdom" class="ghost hidden">
+          Leave your wisdom →
+        </button>
+      </section>
+
+      <!-- ==================== WISDOM ==================== -->
+      <section id="wisdom" class="screen">
+        <div class="wisdom-inner">
+          <div class="kicker">STEP 3 OF 3 · LEAVE YOUR MARK</div>
+          <h2 class="wisdom-h">
+            After that — what's one thing you wish AI understood about being human?
+          </h2>
+          <p class="wisdom-sub">
+            One sentence from what you just lived through. It joins the
+            wisdom wall alongside everyone else's, and becomes part of how
+            this community shows up.
+          </p>
+          <textarea
+            id="wisdomInput"
+            placeholder="e.g. that silence is sometimes an answer…"
+            maxlength="240"
+            rows="3"
+          ></textarea>
+          <div class="wisdom-footer">
+            <span id="wisdomCount" class="counter">0 / 240</span>
+            <button id="wisdomSubmit" class="primary" disabled>
+              Add my voice to the wall →
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== REVEAL ==================== -->
+      <section id="reveal" class="screen reveal">
+        <div class="reveal-inner">
+          <div class="kicker">YOU JUST DID THIS</div>
+          <h1>You shaped an AI.<br />And added your voice.</h1>
+
+          <div class="reveal-block">
+            <div class="reveal-label">YOUR AI'S SOUL</div>
+            <div id="revealSoul" class="soul-traits"></div>
+          </div>
+
+          <div class="reveal-block">
+            <div class="reveal-label" id="revealWisdomLabel">YOUR WISDOM</div>
+            <div id="revealWisdom" class="wisdom-quote"></div>
+          </div>
+
+          <div class="kicker-block">
+            <p class="big">
+              You did in three minutes what most of the world never gets to do:
+              <br />
+              <b>shape AI on your own terms.</b>
+            </p>
+            <p class="big">
+              The AI in your phone, your kid's classroom, your hospital — that AI
+              is being shaped by people you've never met.
+            </p>
+            <p class="big">
+              <b>The AI Collective is 250,000 of us</b> showing up to that table.
+              Your wisdom just joined the wall. Now make it count.
+            </p>
+            <a class="cta" href="https://www.humansinaiweek.com" target="_blank">
+              Pledge your voice → humansinaiweek.com
+            </a>
+          </div>
+
+          <p class="booth-stat" id="boothStat"></p>
+
+          <button id="restartBtn" class="ghost">start a new session</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/visitor.js"></script>
+  </body>
+</html>

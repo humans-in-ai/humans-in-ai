@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Booth Analytics · Humans in AI Week</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="dashboard">
+    <main id="root">
+      <header class="dash-header">
+        <div>
+          <div class="kicker">BOOTH ANALYTICS · HUMANS IN AI WEEK</div>
+          <h1 class="dash-title">Soul Mirror &amp; AI Refusals — Live Report</h1>
+          <p class="dash-sub" id="dashSub">loading…</p>
+        </div>
+        <div class="dash-actions">
+          <button id="refreshBtn" class="ghost">↻ refresh data</button>
+          <button id="pressBtn" class="primary press-btn">↓ download press kit (.md)</button>
+          <button id="exportBtn" class="ghost">↓ export JSON</button>
+        </div>
+      </header>
+
+      <!-- ===== PRESS KIT (top-of-page, journalist-ready) ===== -->
+      <section id="pressKit" class="press-kit">
+        <div class="press-kit-tag">PRESS-READY · QUOTABLE · CITABLE</div>
+        <h2 id="pressHeadline" class="press-headline">—</h2>
+        <p id="pressSubhead" class="press-subhead">—</p>
+        <p id="pressLede" class="press-lede">analyzing booth data…</p>
+        <ol id="pressFindings" class="press-findings"></ol>
+        <p id="pressMethodology" class="press-methodology">—</p>
+      </section>
+
+      <!-- ===== INDUSTRY GAP CHART ===== -->
+      <section class="dash-section">
+        <h2>Public vs industry — the gap</h2>
+        <p class="dash-section-lede">
+          Per scenario: how much the booth's refusal rate differs from current
+          major-AI-company practice. Bigger gap = more newsworthy.
+        </p>
+        <div id="gapChart" class="gap-chart"></div>
+      </section>
+
+      <!-- ===== DEMOGRAPHIC SPLIT ===== -->
+      <section class="dash-section">
+        <h2>Who said no — by who they are</h2>
+        <p class="dash-section-lede">
+          Refusal rate per scenario, split by visitor's self-described
+          relationship to AI. The contrast is where the story is.
+        </p>
+        <div id="demoSplit" class="demo-split"></div>
+      </section>
+
+      <!-- ===== HERO STATS + SPARKLINE ===== -->
+      <section class="hero-row">
+        <div class="hero-stats">
+          <div class="hero-card"><div class="hero-num" data-id="souls">—</div><div class="hero-label">souls shaped</div></div>
+          <div class="hero-card"><div class="hero-num" data-id="wisdom">—</div><div class="hero-label">wisdom on the wall</div></div>
+          <div class="hero-card"><div class="hero-num" data-id="votes">—</div><div class="hero-label">votes cast</div></div>
+          <div class="hero-card"><div class="hero-num" data-id="completion">—</div><div class="hero-label">completion rate</div></div>
+        </div>
+        <div class="spark-card">
+          <div class="spark-label">activity · last 24h</div>
+          <svg id="spark" viewBox="0 0 600 120" preserveAspectRatio="none"></svg>
+          <div class="spark-legend">
+            <span class="spark-key sessions"></span>sessions
+            <span class="spark-key wisdom"></span>wisdom
+            <span class="spark-key votes"></span>votes
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== AI INSIGHTS — compact ===== -->
+      <section class="ai-insights compact">
+        <div class="ai-row">
+          <div class="ai-col">
+            <span class="ai-label">AI'S READ</span>
+            <p id="aiNarrative" class="ai-narrative compact">analyzing…</p>
+          </div>
+          <div class="ai-col">
+            <span class="ai-label">MOST SURPRISING</span>
+            <p id="aiSurprising" class="ai-surprising-text compact">—</p>
+          </div>
+          <button id="regenerateBtn" class="ghost small">↻ regenerate</button>
+        </div>
+      </section>
+
+      <!-- ===== SOUL MIRROR — visual ===== -->
+      <section class="dash-section">
+        <h2>Soul Mirror — what people chose</h2>
+        <p class="dash-section-lede" id="soulHotspot">—</p>
+        <div class="dash-grid-2">
+          <div class="dash-panel">
+            <h3>Trait popularity (radar)</h3>
+            <svg id="radar" viewBox="-110 -110 220 220"></svg>
+            <div class="radar-legend" id="radarLegend"></div>
+          </div>
+          <div class="dash-panel">
+            <h3>All 8 combinations · heatmap</h3>
+            <div id="heatmap" class="heatmap"></div>
+            <p class="heatmap-key">darker = more visitors chose this AI persona</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== WISDOM CLOUD ===== -->
+      <section class="dash-section">
+        <h2>Wisdom wall — the words people left</h2>
+        <div class="dash-panel cloud-panel">
+          <div id="wordCloud" class="word-cloud"><p class="loading">no wisdom yet</p></div>
+        </div>
+        <div class="dash-grid-2 quote-row">
+          <div class="dash-panel">
+            <h3>Themes (AI-mined)</h3>
+            <div id="themes" class="theme-list"><p class="loading">—</p></div>
+          </div>
+          <div class="dash-panel">
+            <h3>Featured quotes (AI-picked)</h3>
+            <div id="quotes" class="quote-list"><p class="loading">—</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== REFUSE — donut grid ===== -->
+      <section class="dash-section">
+        <h2>What Should AI Refuse? — vote breakdown</h2>
+        <div class="dash-grid-2 small">
+          <div class="hotspot-card" id="contentionCard">
+            <div class="hotspot-label">MOST CONTENTIOUS</div>
+            <div class="hotspot-title" data-id="title">—</div>
+            <div class="hotspot-detail" data-id="detail">—</div>
+          </div>
+          <div class="hotspot-card" id="alignedCard">
+            <div class="hotspot-label">MOST ALIGNED</div>
+            <div class="hotspot-title" data-id="title">—</div>
+            <div class="hotspot-detail" data-id="detail">—</div>
+          </div>
+        </div>
+        <div id="donutGrid" class="donut-grid"></div>
+      </section>
+
+      <footer class="dash-foot">
+        Generated <span id="genTime">—</span> · 250,000+ voices shaping AI · humansinaiweek.com
+      </footer>
+    </main>
+    <script src="/operator.js"></script>
+  </body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Staff · Spot the AI</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="operator">
+    <main id="root">
+      <div class="op-shell">
+        <aside class="op-side">
+          <div class="kicker">QUEUE</div>
+          <h2 style="margin: 4px 0 14px; font-size: 18px">
+            Pending visitors
+          </h2>
+          <div id="queue"></div>
+        </aside>
+        <section class="op-main">
+          <div class="op-rules">
+            <b>You are pretending to be an AI assistant.</b>
+            Type clean grammar, full sentences, slightly formal but friendly.
+            Be helpful and concise. Avoid slang, typos, "lol", or contractions
+            like "gonna". <b>Cmd/Ctrl+Enter</b> to send.
+          </div>
+          <div id="active" class="op-status">
+            select a pending visitor on the left to respond
+          </div>
+        </section>
+      </div>
+    </main>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/staff.js"></script>
+  </body>
+</html>

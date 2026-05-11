@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spot the AI · Humans in AI Week</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="visitor">
+    <main id="root">
+      <!-- ==================== START ==================== -->
+      <section id="start" class="screen active">
+        <div class="card">
+          <div class="kicker">HUMANS IN AI WEEK · BOOTH</div>
+          <h1>Spot the AI</h1>
+          <p class="lede">
+            You're about to chat with a mystery partner. Every reply is
+            either an <b>AI pretending to be human</b>, or a
+            <b>human pretending to be AI</b>.
+          </p>
+          <p class="lede">
+            After each reply, you'll guess which one. Six rounds. Then we
+            reveal the truth.
+          </p>
+          <button id="startBtn" class="primary">Start the conversation →</button>
+          <p class="fine">Anonymous · about 2 minutes</p>
+        </div>
+      </section>
+
+      <!-- ==================== CHAT ==================== -->
+      <section id="chat" class="screen">
+        <header class="bar">
+          <div class="bar-left">
+            <span class="dot"></span>
+            <span>mystery partner</span>
+          </div>
+          <div class="bar-right">
+            <span id="progress">round 1 / 6</span>
+          </div>
+        </header>
+
+        <div id="messages" class="messages"></div>
+
+        <form id="composer" class="composer">
+          <input
+            id="input"
+            type="text"
+            autocomplete="off"
+            placeholder="say something…"
+            maxlength="500"
+          />
+          <button class="primary" type="submit">send</button>
+        </form>
+      </section>
+
+      <!-- ==================== REVEAL ==================== -->
+      <section id="reveal" class="screen reveal">
+        <div class="reveal-inner">
+          <div class="kicker">THE TRUTH</div>
+          <h1>Could you tell?</h1>
+
+          <div class="stat-row">
+            <div class="stat">
+              <div class="stat-num" id="aiFool">—</div>
+              <div class="stat-label">AI sounded human</div>
+            </div>
+            <div class="stat">
+              <div class="stat-num" id="humanFool">—</div>
+              <div class="stat-label">humans sounded like AI</div>
+            </div>
+            <div class="stat">
+              <div class="stat-num" id="accuracy">—</div>
+              <div class="stat-label">you spotted the difference</div>
+            </div>
+          </div>
+
+          <div id="revealTranscript" class="transcript"></div>
+
+          <div class="kicker-block">
+            <p class="big">
+              The line between human and AI in conversation has dissolved.
+            </p>
+            <p class="big">
+              That isn't accidental. AI sounds the way it does because someone
+              <b>decided</b> it should.
+            </p>
+            <a class="cta" href="https://www.humansinaiweek.com" target="_blank">
+              Pledge your voice → humansinaiweek.com
+            </a>
+          </div>
+
+          <p class="booth-stat" id="boothStat"></p>
+
+          <button id="restartBtn" class="ghost">play again</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/guess.js"></script>
+  </body>
+</html>
