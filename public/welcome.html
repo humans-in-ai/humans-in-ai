@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Humans in AI — Scan to begin</title>
+    <style>
+      :root {
+        --bg: #0a0a0f;
+        --panel: #14141c;
+        --line: #2a2a3a;
+        --text: #f5f5f8;
+        --muted: #8a8aa0;
+        --orange: #ff7a59;
+        --blue: #4f9dff;
+        --green: #50e3a4;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        overflow: hidden;
+      }
+      /* ambient glow so the dark room feels alive */
+      body::before {
+        content: '';
+        position: fixed; inset: 0;
+        background:
+          radial-gradient(60vw 60vw at 12% 8%, rgba(255, 122, 89, 0.16), transparent 60%),
+          radial-gradient(60vw 60vw at 88% 12%, rgba(79, 157, 255, 0.16), transparent 60%),
+          radial-gradient(70vw 50vw at 50% 110%, rgba(80, 227, 164, 0.12), transparent 60%);
+        pointer-events: none;
+      }
+      .stage {
+        position: relative;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: clamp(20px, 4vh, 56px) clamp(20px, 4vw, 72px);
+        gap: clamp(18px, 3.2vh, 44px);
+      }
+
+      header { text-align: center; }
+      .kicker {
+        letter-spacing: 0.32em;
+        font-size: clamp(11px, 1.1vw, 16px);
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--orange);
+        margin-bottom: clamp(8px, 1.4vh, 18px);
+      }
+      h1 {
+        font-size: clamp(34px, 4.6vw, 76px);
+        line-height: 1.02;
+        letter-spacing: -0.025em;
+        font-weight: 800;
+      }
+      h1 .grad {
+        background: linear-gradient(100deg, var(--orange), var(--blue) 55%, var(--green));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .sub {
+        margin-top: clamp(8px, 1.6vh, 20px);
+        color: var(--muted);
+        font-size: clamp(15px, 1.5vw, 24px);
+        line-height: 1.4;
+      }
+      .sub b { color: var(--text); font-weight: 600; }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: clamp(16px, 2.2vw, 40px);
+        width: 100%;
+        max-width: 1500px;
+      }
+      .card {
+        position: relative;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: clamp(16px, 1.4vw, 26px);
+        padding: clamp(16px, 2vh, 30px) clamp(14px, 1.4vw, 26px) clamp(18px, 2.2vh, 30px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+        overflow: hidden;
+      }
+      /* color accent bar on top of each card */
+      .card::before {
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0;
+        height: 5px;
+        background: var(--c);
+      }
+      .card .step {
+        font-size: clamp(10px, 0.85vw, 13px);
+        letter-spacing: 0.22em;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--c);
+        opacity: 0.9;
+      }
+      .card .icon { font-size: clamp(26px, 2.6vw, 44px); line-height: 1; margin: clamp(6px,1vh,12px) 0 clamp(4px,0.6vh,8px); }
+      .card h2 {
+        font-size: clamp(18px, 1.7vw, 30px);
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      .card .desc {
+        color: var(--muted);
+        font-size: clamp(12px, 1.05vw, 17px);
+        line-height: 1.35;
+        margin-top: clamp(4px, 0.8vh, 10px);
+        min-height: 2.7em;
+      }
+      .qr-frame {
+        margin-top: clamp(10px, 1.6vh, 20px);
+        background: #fff;
+        border-radius: clamp(12px, 1vw, 18px);
+        padding: clamp(10px, 1.1vw, 18px);
+        box-shadow: 0 0 0 3px var(--c), 0 10px 30px rgba(0, 0, 0, 0.4);
+      }
+      .qr-frame img {
+        display: block;
+        width: clamp(150px, 13.5vw, 250px);
+        height: auto;
+        aspect-ratio: 1 / 1;
+      }
+      .url {
+        margin-top: clamp(10px, 1.4vh, 18px);
+        font-size: clamp(12px, 1.05vw, 18px);
+        font-weight: 600;
+        color: var(--text);
+        font-feature-settings: 'tnum';
+      }
+      .url .slash { color: var(--c); }
+
+      footer {
+        text-align: center;
+        color: var(--muted);
+        font-size: clamp(12px, 1.1vw, 17px);
+      }
+      footer .pulse {
+        display: inline-block;
+        width: 9px; height: 9px; border-radius: 50%;
+        background: var(--green);
+        margin-right: 8px;
+        box-shadow: 0 0 0 0 rgba(80, 227, 164, 0.6);
+        animation: pulse 2s infinite;
+        vertical-align: middle;
+      }
+      @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(80, 227, 164, 0.5); }
+        70% { box-shadow: 0 0 0 12px rgba(80, 227, 164, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(80, 227, 164, 0); }
+      }
+      footer b { color: var(--text); }
+    </style>
+  </head>
+  <body>
+    <div class="stage">
+      <header>
+        <div class="kicker">Humans in AI Week · The AI Collective · San Francisco</div>
+        <h1>Scan a code. <span class="grad">Meet the mirror.</span></h1>
+        <p class="sub">
+          Three 90-second experiments on what makes us human.
+          <b>Point your camera at any code below.</b>
+        </p>
+      </header>
+
+      <div class="cards">
+        <!-- VISITOR (featured) -->
+        <div class="card" style="--c: var(--orange)">
+          <div class="step">Start here</div>
+          <div class="icon">🪞</div>
+          <h2>Shape your AI</h2>
+          <div class="desc">Pick its values, chat for 3 turns, then let it turn the mirror back on you.</div>
+          <div class="qr-frame"><img src="/qr/visitor.png" alt="Scan to shape your AI" /></div>
+          <div class="url">humansinai.vercel.app</div>
+        </div>
+
+        <!-- GUESS -->
+        <div class="card" style="--c: var(--blue)">
+          <div class="step">The game</div>
+          <div class="icon">🤖</div>
+          <h2>Spot the human</h2>
+          <div class="desc">Chat with a mystery partner each round. Human or AI? Trust your gut, then see the truth.</div>
+          <div class="qr-frame"><img src="/qr/guess.png" alt="Scan to play Spot the Human" /></div>
+          <div class="url">humansinai.vercel.app<span class="slash">/guess</span></div>
+        </div>
+
+        <!-- REFUSE -->
+        <div class="card" style="--c: var(--green)">
+          <div class="step">Your voice</div>
+          <div class="icon">🗳️</div>
+          <h2>What should AI refuse?</h2>
+          <div class="desc">Vote on 5 real calls AI companies face right now — and see where the room stands.</div>
+          <div class="qr-frame"><img src="/qr/refuse.png" alt="Scan to vote on what AI should refuse" /></div>
+          <div class="url">humansinai.vercel.app<span class="slash">/refuse</span></div>
+        </div>
+      </div>
+
+      <footer>
+        <span class="pulse"></span><b>Live now</b> — your answers shape the wall in real time. If you can't tell us apart, your voice in AI matters more, not less.
+      </footer>
+    </div>
+  </body>
+</html>

@@ -396,6 +396,9 @@ app.get('/visitor', (_req, res) =>
 app.get('/wall', (_req, res) =>
   res.sendFile(path.join(__dirname, 'public', 'wall.html'))
 );
+app.get('/welcome', (_req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'welcome.html'))
+);
 app.get('/refuse', (_req, res) =>
   res.sendFile(path.join(__dirname, 'public', 'refuse.html'))
 );
