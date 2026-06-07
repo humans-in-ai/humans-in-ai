@@ -45,6 +45,8 @@ import {
   listWaitingPending,
   claimPending,
   finalizePending,
+  addHumanLine,
+  getRandomHumanLine,
 } from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -586,6 +588,9 @@ app.post('/api/guess/message', async (req, res) => {
     source: null,
     text,
   });
+  // Every visitor message is genuine human text — feed it into the pool so the
+  // autonomous "human" turns keep getting fresher and more varied all night.
+  await addHumanLine({ sessionId, text });
   const history = await ttGetHistory(sessionId);
 
   if (truth === 'ai') {
@@ -612,11 +617,33 @@ app.post('/api/guess/message', async (req, res) => {
     });
   }
 
-  // Human turn — hand off to a staff operator via a pending row. The client
-  // polls /api/guess/poll until a staff member answers or the window expires.
-  const requestId = nanoid(10);
-  await createPending({ requestId, sessionId, turn: t, history });
-  res.json({ pending: true, requestId, turn: t });
+  // Human turn — AUTONOMOUS. Serve a real line another person actually typed
+  // at this booth (never the visitor's own), so guessing "human" means they
+  // really did read a human. No live operator needed; scales to a full room.
+  // Falls back to Haiku-as-human only if the pool is somehow empty.
+  let partnerText = await getRandomHumanLine(sessionId);
+  if (!partnerText) {
+    try {
+      partnerText = await callHaikuAsHuman(history);
+    } catch (err) {
+      console.error('guess human-pool fallback failed', err);
+      partnerText = pickFallback();
+    }
+  }
+  const msgId = await ttInsertMessage({
+    sessionId,
+    turn: t,
+    role: 'partner',
+    source: 'human',
+    text: partnerText,
+  });
+  res.json({
+    messageId: msgId,
+    turn: t,
+    text: partnerText,
+    remaining: GUESS_TURNS - (t + 1),
+    delayMs: aiTypingDelayMs(partnerText),
+  });
 });
 
 app.get('/api/guess/poll', async (req, res) => {

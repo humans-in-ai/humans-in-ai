@@ -2084,3 +2084,80 @@ body.visitor[data-soul-tone] .composer {
 .demo-bar-pct .small {
   font-size: 10px;
 }
+
+/* ===================================================== */
+/* MOBILE FIT — phones (visitor / guess / refuse flows)  */
+/* Root cause of clipped buttons: fixed 100vh + body      */
+/* overflow:hidden meant content taller than the phone's  */
+/* visible area (address bar eats into 100vh) had no way   */
+/* to scroll. Here we let the page scroll and use dynamic  */
+/* viewport height so nothing is ever stranded off-screen. */
+/* ===================================================== */
+@media (max-width: 640px) {
+  html,
+  body {
+    height: auto;
+    min-height: 100dvh;
+    overflow-y: auto;
+    -webkit-text-size-adjust: 100%;
+  }
+  body.visitor,
+  body.operator,
+  body.wall {
+    display: block;
+  }
+  main#root {
+    height: auto;
+    min-height: 100dvh;
+    align-items: stretch;
+  }
+
+  /* Generic screens: stack from the top, grow with content, scroll the page */
+  .screen {
+    height: auto;
+    min-height: 100dvh;
+    justify-content: flex-start;
+    overflow: visible;
+    padding: 24px 18px calc(28px + env(safe-area-inset-bottom));
+  }
+
+  /* Chat keeps a fixed viewport frame so the composer stays pinned and the
+     message list scrolls internally (not the whole page). */
+  .screen#chat {
+    height: 100dvh;
+    min-height: 100dvh;
+    padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
+  }
+
+  /* Tame oversized type so headings + buttons fit without hunting */
+  h1 {
+    font-size: 30px;
+  }
+  .shape-h {
+    font-size: 24px;
+  }
+  .q-prompt {
+    font-size: 21px;
+  }
+  .wisdom-h {
+    font-size: 24px;
+  }
+  .card,
+  .wisdom-inner {
+    padding: 24px 20px;
+  }
+  .screen#shape,
+  .screen#question,
+  .screen#wisdom {
+    padding-top: 24px;
+  }
+  /* Choice grids stack to full-width tap targets on narrow screens */
+  .choice-row {
+    grid-template-columns: 1fr;
+  }
+  /* iOS zooms when an input font is <16px; keep inputs at 16px */
+  #input,
+  #wisdomInput {
+    font-size: 16px;
+  }
+}

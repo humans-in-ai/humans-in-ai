@@ -93,6 +93,17 @@ export const SCHEMA = `
     answered_at INTEGER
   );
 
+  -- Pool of real human-written one-liners for the autonomous /guess "human"
+  -- turns. Seeded with a starter set and continuously grown with the actual
+  -- messages booth visitors type, so a "human" reply is genuinely human —
+  -- just served asynchronously instead of by a live operator.
+  CREATE TABLE IF NOT EXISTS human_lines (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT,
+    text TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  );
+
   CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id);
   CREATE INDEX IF NOT EXISTS idx_wisdom_created ON wisdom(created_at DESC);
   CREATE INDEX IF NOT EXISTS idx_votes_q ON votes(question_id, option_id);
@@ -613,6 +624,48 @@ export async function finalizePending({
      WHERE request_id = ?`,
     [status, text, source, messageId, Date.now(), requestId]
   );
+}
+
+// ---- human-line pool (autonomous /guess human turns) -------------------
+
+export async function addHumanLine({ sessionId, text }) {
+  const trimmed = String(text).trim().slice(0, 240);
+  if (!trimmed) return;
+  await run(
+    'INSERT INTO human_lines (session_id, text, created_at) VALUES (?, ?, ?)',
+    [sessionId ?? null, trimmed, Date.now()]
+  );
+}
+
+// Pull a random real human line, preferring one NOT authored in this session
+// so a visitor never sees their own message handed back to them.
+export async function getRandomHumanLine(excludeSessionId) {
+  if (excludeSessionId) {
+    const row = await get(
+      'SELECT text FROM human_lines WHERE session_id IS NOT ? ORDER BY RANDOM() LIMIT 1',
+      [excludeSessionId]
+    );
+    if (row?.text) return row.text;
+  }
+  const any = await get('SELECT text FROM human_lines ORDER BY RANDOM() LIMIT 1');
+  return any?.text ?? null;
+}
+
+export async function countHumanLines() {
+  return (await get('SELECT COUNT(*) AS n FROM human_lines')).n;
+}
+
+// Idempotent seed — only inserts the starter set if the pool is empty.
+export async function seedHumanLines(lines) {
+  if ((await countHumanLines()) > 0) return 0;
+  const now = Date.now();
+  for (const t of lines) {
+    await run(
+      'INSERT INTO human_lines (session_id, text, created_at) VALUES (NULL, ?, ?)',
+      [t, now]
+    );
+  }
+  return lines.length;
 }
 
 export default client;
