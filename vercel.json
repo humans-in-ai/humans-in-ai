@@ -1,0 +1,19 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["sfo1"],
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/", "destination": "/visitor.html" },
+    { "source": "/visitor", "destination": "/visitor.html" },
+    { "source": "/wall", "destination": "/wall.html" },
+    { "source": "/refuse", "destination": "/refuse.html" },
+    { "source": "/operator", "destination": "/operator.html" },
+    { "source": "/guess", "destination": "/guess.html" },
+    { "source": "/staff", "destination": "/staff.html" }
+  ]
+}

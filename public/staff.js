@@ -1,49 +1,49 @@
-const socket = io();
+// Operator console — polls for pending human-handoff requests (no WebSocket).
+// A request leaves the queue once it's claimed, answered, or times out, which
+// the next poll reflects by its absence from the waiting list.
 const queueEl = document.getElementById('queue');
 const activeEl = document.getElementById('active');
 
+const POLL_INTERVAL_MS = 1500;
 const queue = new Map(); // requestId -> { sessionId, history, turn }
 let activeRequestId = null;
 
-socket.emit('staff:join');
-
-socket.on('staff:joined', ({ pending }) => {
-  for (const p of pending) queue.set(p.requestId, p);
-  renderQueue();
-});
-
-socket.on('staff:request-new', (req) => {
-  queue.set(req.requestId, req);
-  renderQueue();
-  flashTab();
-});
-
-socket.on('staff:request-claimed', ({ requestId }) => {
-  queue.delete(requestId);
-  if (activeRequestId === requestId) {
-    activeRequestId = null;
-    renderActive();
+async function poll() {
+  let data;
+  try {
+    data = await (await fetch('/api/staff/pending')).json();
+  } catch (e) {
+    return;
   }
-  renderQueue();
-});
+  const incoming = data.pending ?? [];
+  const incomingIds = new Set(incoming.map((p) => p.requestId));
 
-socket.on('staff:request-cancelled', ({ requestId }) => {
-  queue.delete(requestId);
-  if (activeRequestId === requestId) {
-    activeRequestId = null;
-    renderActive();
-  }
-  renderQueue();
-});
+  let changed = false;
+  let hasNew = false;
 
-socket.on('staff:stale', ({ requestId }) => {
-  queue.delete(requestId);
-  if (activeRequestId === requestId) {
-    activeRequestId = null;
-    renderActive();
+  // Drop requests that are no longer waiting (claimed/answered/expired).
+  for (const rid of [...queue.keys()]) {
+    if (!incomingIds.has(rid)) {
+      queue.delete(rid);
+      changed = true;
+      if (activeRequestId === rid) {
+        activeRequestId = null;
+        renderActive();
+      }
+    }
   }
-  renderQueue();
-});
+  // Add freshly-arrived requests.
+  for (const p of incoming) {
+    if (!queue.has(p.requestId)) {
+      queue.set(p.requestId, p);
+      changed = true;
+      hasNew = true;
+    }
+  }
+
+  if (changed) renderQueue();
+  if (hasNew) flashTab();
+}
 
 function renderQueue() {
   queueEl.innerHTML = '';
@@ -72,8 +72,7 @@ function renderQueue() {
 function renderActive() {
   if (!activeRequestId || !queue.has(activeRequestId)) {
     activeEl.className = 'op-status';
-    activeEl.innerHTML =
-      'select a pending visitor on the left to respond';
+    activeEl.innerHTML = 'select a pending visitor on the left to respond';
     return;
   }
   const req = queue.get(activeRequestId);
@@ -97,12 +96,26 @@ function renderActive() {
 
   const ta = document.getElementById('response');
   ta.focus();
-  const send = () => {
+  const send = async () => {
     const text = ta.value.trim();
     if (!text) return;
-    socket.emit('staff:respond', { requestId: activeRequestId, text });
-    ta.value = '';
+    const rid = activeRequestId;
     ta.disabled = true;
+    try {
+      await fetch('/api/staff/respond', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ requestId: rid, text }),
+      });
+    } catch (e) {
+      /* fall through — poll will reconcile */
+    }
+    // Whether the response landed or was stale, the request is done for us.
+    queue.delete(rid);
+    if (activeRequestId === rid) activeRequestId = null;
+    renderActive();
+    renderQueue();
+    poll();
   };
   document.getElementById('sendBtn').addEventListener('click', send);
   ta.addEventListener('keydown', (e) => {
@@ -127,3 +140,8 @@ function escape(s) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 }
+
+renderQueue();
+renderActive();
+poll();
+setInterval(poll, POLL_INTERVAL_MS);

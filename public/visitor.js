@@ -1,4 +1,13 @@
-const socket = io();
+// REST + client-side pacing (no WebSocket). The server returns a `delayMs`
+// per reply so the typing indicator keeps its personality-paced feel.
+async function postJSON(path, body) {
+  const r = await fetch(path, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body || {}),
+  });
+  return r.json();
+}
 
 const screens = {
   start: document.getElementById('start'),
@@ -34,18 +43,15 @@ function showScreen(name) {
 // =====================================================
 // START
 // =====================================================
-document.getElementById('startBtn').addEventListener('click', () => {
-  socket.emit('visitor:start');
+document.getElementById('startBtn').addEventListener('click', async () => {
+  const { sessionId, totalTurns } = await postJSON('/api/visitor/start');
+  state.sessionId = sessionId;
+  state.totalTurns = totalTurns;
+  showScreen('shape');
 });
 
 document.getElementById('restartBtn').addEventListener('click', () => {
   window.location.reload();
-});
-
-socket.on('visitor:started', ({ sessionId, totalTurns }) => {
-  state.sessionId = sessionId;
-  state.totalTurns = totalTurns;
-  showScreen('shape');
 });
 
 // =====================================================
@@ -66,24 +72,42 @@ document.querySelectorAll('.choice-row').forEach((row) => {
   });
 });
 
-document.getElementById('shapeNext').addEventListener('click', () => {
+document.getElementById('shapeNext').addEventListener('click', async () => {
   const btn = document.getElementById('shapeNext');
   btn.disabled = true;
   btn.textContent = 'bringing your AI to life…';
-  socket.emit('visitor:shape', {
+  // Show the soul-forming animation immediately while we wait for the server.
+  showFormingScreen();
+
+  const { soul, opening, delayMs } = await postJSON('/api/visitor/shape', {
     sessionId: state.sessionId,
     values: state.shapeChoices,
   });
-  // Show the soul-forming animation immediately while we wait for the server.
-  showFormingScreen();
+
+  state.soul = soul;
+  applySoulTint();
+  renderSoulCard(soul);
+  setProgress(`round 1 / ${state.totalTurns}`);
+
+  // Hold the forming screen for a beat so the moment lands, then reveal chat
+  // and play the opening line with a personality-paced typing delay.
+  setTimeout(() => {
+    showScreen('chat');
+    addTyping();
+    setTimeout(() => {
+      removeTyping();
+      addBubble({ role: 'ai', text: opening });
+      state.turn = 0;
+      setProgress(`round 1 / ${state.totalTurns}`);
+      enableInput();
+    }, delayMs);
+  }, 1200);
 });
 
 function showFormingScreen() {
   const stage = document.getElementById('formTraits');
   stage.innerHTML = '';
   const order = ['tone', 'priority', 'struggle'];
-  // We don't have the icon/label dictionary on the client yet — derive from
-  // the choice value the user picked. Match the server-side TRAIT_LABELS.
   const traits = {
     tone: { honest: { icon: '🪞', label: 'Honest' }, kind: { icon: '🤲', label: 'Kind' } },
     priority: {
@@ -106,15 +130,6 @@ function showFormingScreen() {
   }
   showScreen('forming');
 }
-
-socket.on('visitor:shaped', ({ soul }) => {
-  state.soul = soul;
-  applySoulTint();
-  renderSoulCard(soul);
-  setProgress(`round 1 / ${state.totalTurns}`);
-  // Hold the forming screen for a beat so the moment lands, then reveal chat.
-  setTimeout(() => showScreen('chat'), 1200);
-});
 
 function applySoulTint() {
   const tint = TONE_TINT[state.shapeChoices.tone] ?? '#ff7a59';
@@ -193,38 +208,42 @@ function disableInput() {
   sendBtn.disabled = true;
 }
 
-composerEl.addEventListener('submit', (e) => {
+composerEl.addEventListener('submit', async (e) => {
   e.preventDefault();
   const text = inputEl.value.trim();
   if (!text) return;
   if (state.turn >= state.totalTurns) return;
   addBubble({ role: 'visitor', text });
-  socket.emit('visitor:message', { sessionId: state.sessionId, text });
   inputEl.value = '';
   disableInput();
-});
-
-socket.on('visitor:thinking', () => {
   addTyping();
-});
 
-socket.on('visitor:reply', ({ text, turn, remaining, isMirror }) => {
-  removeTyping();
-  addBubble({ role: 'ai', text, isMirror: !!isMirror });
-  state.turn = turn;
-  if (remaining === 0 || turn >= state.totalTurns) {
-    setProgress('the mirror moment.');
-    disableInput();
-    toWisdomBtn.classList.remove('hidden');
+  let r;
+  try {
+    r = await postJSON('/api/visitor/message', {
+      sessionId: state.sessionId,
+      text,
+    });
+  } catch (err) {
+    removeTyping();
+    enableInput();
     return;
   }
-  if (turn === 0) {
-    // opening — visitor hasn't spoken yet, this is round 1 incoming
-    setProgress(`round 1 / ${state.totalTurns}`);
-  } else {
-    setProgress(`round ${turn + 1} / ${state.totalTurns}`);
-  }
-  enableInput();
+
+  // Keep the typing indicator up for the personality-paced delay, then reveal.
+  setTimeout(() => {
+    removeTyping();
+    addBubble({ role: 'ai', text: r.text, isMirror: !!r.isMirror });
+    state.turn = r.turn;
+    if (r.remaining === 0 || r.turn >= state.totalTurns) {
+      setProgress('the mirror moment.');
+      disableInput();
+      toWisdomBtn.classList.remove('hidden');
+      return;
+    }
+    setProgress(`round ${r.turn + 1} / ${state.totalTurns}`);
+    enableInput();
+  }, r.delayMs ?? 0);
 });
 
 toWisdomBtn.addEventListener('click', () => {
@@ -245,20 +264,20 @@ wisdomInput.addEventListener('input', () => {
   wisdomSubmit.disabled = len < 3;
 });
 
-wisdomSubmit.addEventListener('click', () => {
+wisdomSubmit.addEventListener('click', async () => {
   const text = wisdomInput.value.trim();
   if (text.length < 3) return;
   state.wisdomText = text;
   wisdomSubmit.disabled = true;
   wisdomSubmit.textContent = 'adding your voice…';
-  socket.emit('visitor:wisdom', { sessionId: state.sessionId, text });
-});
-
-socket.on('visitor:wisdom-saved', ({ wisdomNumber, text }) => {
+  const { wisdomNumber, text: saved } = await postJSON('/api/visitor/wisdom', {
+    sessionId: state.sessionId,
+    text,
+  });
   state.wisdomNumber = wisdomNumber;
   document.getElementById('revealWisdomLabel').textContent =
     `YOUR WISDOM · #${wisdomNumber} ON THE WALL`;
-  document.getElementById('revealWisdom').textContent = `“${text}”`;
+  document.getElementById('revealWisdom').textContent = `“${saved}”`;
   fetchAndRenderBoothStat();
   showScreen('reveal');
 });

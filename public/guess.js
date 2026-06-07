@@ -1,4 +1,17 @@
-const socket = io();
+// REST + polling. AI turns return immediately; human turns return { pending }
+// and the client polls /api/guess/poll until a staff operator answers (or the
+// server times out and substitutes an AI reply).
+async function postJSON(path, body) {
+  const r = await fetch(path, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body || {}),
+  });
+  return r.json();
+}
+
+const POLL_INTERVAL_MS = 1200;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const screens = {
   start: document.getElementById('start'),
@@ -65,14 +78,18 @@ function attachGuess(bubble, messageId) {
   `;
   bubble.appendChild(row);
   row.querySelectorAll('button.guess').forEach((b) =>
-    b.addEventListener('click', () => {
-      socket.emit('guess:guess', {
+    b.addEventListener('click', async () => {
+      row.querySelectorAll('button.guess').forEach((x) => (x.disabled = true));
+      state.awaitingGuess = false;
+      const payload = await postJSON('/api/guess/guess', {
         sessionId: state.sessionId,
         messageId,
         guess: b.dataset.guess,
       });
-      row.querySelectorAll('button.guess').forEach((x) => (x.disabled = true));
-      state.awaitingGuess = false;
+      renderGuessResult(bubble, payload);
+      if (payload.reveal) {
+        setTimeout(() => renderReveal(payload.reveal), 600);
+      }
     })
   );
 }
@@ -91,26 +108,8 @@ function renderGuessResult(bubble, { guess, truth, correct }) {
   inputEl.focus();
 }
 
-document.getElementById('startBtn').addEventListener('click', () => {
-  socket.emit('guess:start');
-});
-
-document.getElementById('restartBtn').addEventListener('click', () => {
-  window.location.reload();
-});
-
-composerEl.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const text = inputEl.value.trim();
-  if (!text || state.awaitingGuess) return;
-  if (state.turn >= state.totalTurns) return;
-  addBubble({ role: 'visitor', text });
-  socket.emit('guess:message', { sessionId: state.sessionId, text });
-  inputEl.value = '';
-  inputEl.disabled = true;
-});
-
-socket.on('guess:started', ({ sessionId, totalTurns }) => {
+document.getElementById('startBtn').addEventListener('click', async () => {
+  const { sessionId, totalTurns } = await postJSON('/api/guess/start');
   state.sessionId = sessionId;
   state.totalTurns = totalTurns;
   state.turn = 0;
@@ -119,9 +118,57 @@ socket.on('guess:started', ({ sessionId, totalTurns }) => {
   inputEl.focus();
 });
 
-socket.on('guess:thinking', () => addTyping());
+document.getElementById('restartBtn').addEventListener('click', () => {
+  window.location.reload();
+});
 
-socket.on('guess:reply', ({ messageId, text, remaining }) => {
+composerEl.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = inputEl.value.trim();
+  if (!text || state.awaitingGuess) return;
+  if (state.turn >= state.totalTurns) return;
+  addBubble({ role: 'visitor', text });
+  inputEl.value = '';
+  inputEl.disabled = true;
+  addTyping();
+
+  let r;
+  try {
+    r = await postJSON('/api/guess/message', {
+      sessionId: state.sessionId,
+      text,
+    });
+  } catch (err) {
+    removeTyping();
+    inputEl.disabled = false;
+    return;
+  }
+
+  if (r.pending) {
+    const reply = await pollForReply(r.requestId);
+    if (reply) handleReply(reply);
+    return;
+  }
+  // AI turn — pace the reply with the server-provided delay.
+  setTimeout(() => handleReply(r), r.delayMs ?? 0);
+});
+
+async function pollForReply(requestId) {
+  while (true) {
+    await sleep(POLL_INTERVAL_MS);
+    let res;
+    try {
+      res = await (
+        await fetch('/api/guess/poll?requestId=' + encodeURIComponent(requestId))
+      ).json();
+    } catch (e) {
+      continue;
+    }
+    if (res && !res.waiting) return res;
+  }
+}
+
+function handleReply({ messageId, text, remaining }) {
   removeTyping();
   const bubble = addBubble({ role: 'partner', text, id: messageId });
   state.awaitingGuess = true;
@@ -129,18 +176,7 @@ socket.on('guess:reply', ({ messageId, text, remaining }) => {
   state.turn += 1;
   setProgress(state.turn + 1, state.totalTurns);
   if (remaining === 0) progressEl.textContent = 'final reveal coming…';
-});
-
-socket.on('guess:guess-result', (payload) => {
-  const bubble = messagesEl.querySelector(
-    `.bubble.partner[data-message-id="${payload.messageId}"]`
-  );
-  if (bubble) renderGuessResult(bubble, payload);
-});
-
-socket.on('guess:reveal', ({ transcript, stats, booth }) => {
-  setTimeout(() => renderReveal({ transcript, stats, booth }), 600);
-});
+}
 
 function pct(x) {
   return `${Math.round(x * 100)}%`;

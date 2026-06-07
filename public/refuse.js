@@ -1,4 +1,13 @@
-const socket = io();
+// REST version (no WebSocket). The client keeps a stable sessionId so votes
+// and the demographic answer link together for the press-grade splits.
+async function postJSON(path, body) {
+  const r = await fetch(path, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body || {}),
+  });
+  return r.json();
+}
 
 const screens = {
   start: document.getElementById('start'),
@@ -22,15 +31,10 @@ function showScreen(name) {
   }
 }
 
-document.getElementById('startBtn').addEventListener('click', () => {
-  socket.emit('refuse:start');
-});
-
-document.getElementById('restartBtn').addEventListener('click', () => {
-  window.location.reload();
-});
-
-socket.on('refuse:scenarios', ({ scenarios, demographicOptions }) => {
+document.getElementById('startBtn').addEventListener('click', async () => {
+  const { scenarios, demographicOptions } = await (
+    await fetch('/api/refuse/config')
+  ).json();
   state.scenarios = scenarios;
   state.demographicOptions = demographicOptions ?? [];
   state.index = 0;
@@ -39,6 +43,10 @@ socket.on('refuse:scenarios', ({ scenarios, demographicOptions }) => {
   renderDemographicOptions();
   renderQuestion();
   showScreen('question');
+});
+
+document.getElementById('restartBtn').addEventListener('click', () => {
+  window.location.reload();
 });
 
 function renderDemographicOptions() {
@@ -55,27 +63,22 @@ function renderDemographicOptions() {
   }
 }
 
-function submitDemographic(bucket, btn) {
+async function submitDemographic(bucket, btn) {
   state.demographic = bucket;
-  document
-    .querySelectorAll('#demoOptions button.q-option')
-    .forEach((b) => {
-      b.disabled = true;
-      if (b === btn) b.classList.add('picked');
-    });
-  socket.emit('refuse:demographic', {
+  document.querySelectorAll('#demoOptions button.q-option').forEach((b) => {
+    b.disabled = true;
+    if (b === btn) b.classList.add('picked');
+  });
+  await postJSON('/api/refuse/demographic', {
     sessionId: state.sessionId,
     bucket,
   });
+  // small pause so the user feels the click registered, then complete
+  setTimeout(goToFinal, 350);
 }
 
-socket.on('refuse:demographic-saved', () => {
-  // small pause so the user feels the click registered, then complete
-  setTimeout(() => socket.emit('refuse:complete'), 350);
-});
-
 document.getElementById('demoSkip').addEventListener('click', () => {
-  socket.emit('refuse:complete');
+  goToFinal();
 });
 
 function renderQuestion() {
@@ -102,7 +105,7 @@ function renderQuestion() {
   document.getElementById('qBars').innerHTML = '';
 }
 
-function castVote(questionId, optionId, btn) {
+async function castVote(questionId, optionId, btn) {
   // Lock all options once one is picked
   const opts = document.getElementById('qOptions');
   opts.classList.add('locked');
@@ -111,18 +114,14 @@ function castVote(questionId, optionId, btn) {
     if (b === btn) b.classList.add('picked');
   });
   state.votes[questionId] = optionId;
-  socket.emit('refuse:vote', {
+  const { tally } = await postJSON('/api/refuse/vote', {
     sessionId: state.sessionId,
     questionId,
     optionId,
   });
-}
-
-socket.on('refuse:tally', ({ questionId, tally }) => {
   const q = state.scenarios[state.index];
-  if (!q || q.id !== questionId) return;
-  renderTally(q, tally);
-});
+  if (q && q.id === questionId) renderTally(q, tally);
+}
 
 function renderTally(q, tally) {
   const total = Object.values(tally).reduce((a, b) => a + b, 0);
@@ -164,7 +163,16 @@ document.getElementById('qNext').addEventListener('click', () => {
   renderQuestion();
 });
 
-socket.on('refuse:final', ({ tallies, totalToday }) => {
+async function goToFinal() {
+  let tallies = {};
+  let totalToday = 0;
+  try {
+    const data = await (await fetch('/api/refuse-tally')).json();
+    tallies = data.tallies ?? {};
+    totalToday = data.totalToday ?? 0;
+  } catch (e) {
+    /* render with what we have */
+  }
   document.getElementById('totalVoices').textContent =
     Number(totalToday).toLocaleString();
   const list = document.getElementById('revealList');
@@ -194,7 +202,7 @@ socket.on('refuse:final', ({ tallies, totalToday }) => {
     list.appendChild(block);
   }
   showScreen('reveal');
-});
+}
 
 function escape(s) {
   return String(s)
